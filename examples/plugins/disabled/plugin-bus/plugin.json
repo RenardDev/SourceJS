@@ -1,0 +1,6 @@
+{
+	"Name": "plugin-bus",
+	"Entry": "index.js",
+	"Autoload": false,
+	"Description": "Internal plugin bus example."
+}

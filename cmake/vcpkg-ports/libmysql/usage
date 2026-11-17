@@ -1,0 +1,4 @@
+For an existing CMake target named main, use the exported libmysql target:
+
+    find_package(unofficial-libmysql CONFIG REQUIRED)
+    target_link_libraries(main PRIVATE unofficial::libmysql::libmysql)

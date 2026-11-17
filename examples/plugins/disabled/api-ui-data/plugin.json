@@ -1,0 +1,8 @@
+{
+	"Name": "api-ui-data",
+	"Entry": "index.js",
+	"Autoload": false,
+	"Version": "1.0.0",
+	"Author": "SourceJS",
+	"Description": "Live messages, menus, config, settings, translations, auth, string-table, effects, physics and studio examples."
+}

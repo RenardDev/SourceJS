@@ -1,0 +1,478 @@
+name: Build SDK Branch
+
+on:
+  workflow_call:
+    inputs:
+      platform:
+        required: true
+        type: string
+      runner:
+        required: true
+        type: string
+      sdk_branch:
+        required: true
+        type: string
+      sdk_ref:
+        required: true
+        type: string
+      safe_name:
+        required: true
+        type: string
+      arch:
+        required: true
+        type: string
+      visual_studio_arch:
+        required: true
+        type: string
+      v8_config:
+        required: true
+        type: string
+      v8_cache_key:
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+env:
+  HL2SDK_REMOTE: https://github.com/alliedmodders/hl2sdk.git
+  SOURCEJS_CONFIG: Release
+  V8_ROOT: ${{ github.workspace }}/external/v8
+
+jobs:
+  build:
+    name: Build ${{ inputs.platform }} ${{ inputs.sdk_branch }} ${{ inputs.arch }}
+    runs-on: ${{ inputs.runner }}
+
+    steps:
+      - name: Checkout SourceJS
+        uses: actions/checkout@v4
+
+      - name: Verify project contracts on Linux
+        if: ${{ inputs.platform == 'linux' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          python3 tools/verify_project.py
+
+      - name: Verify project contracts on Windows
+        if: ${{ inputs.platform == 'windows' }}
+        shell: pwsh
+        run: |
+          python tools/verify_project.py
+
+      - name: Install Linux build dependencies
+        if: ${{ inputs.platform == 'linux' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          sudo dpkg --add-architecture i386
+          sudo apt-get update
+          sudo apt-get install -y \
+            binutils \
+            build-essential \
+            cmake \
+            curl \
+            git \
+            g++-multilib \
+            gcc-multilib \
+            libc6-dev-i386 \
+            linux-libc-dev:i386 \
+            lld \
+            ninja-build \
+            pkg-config \
+            python3 \
+            tar \
+            unzip \
+            zip
+
+      - name: Test native manager-state persistence
+        run: node tools/smoke_manager_state_native_contracts.js
+
+      - name: Test native entity-factory record transfers
+        run: node tools/smoke_entity_factory_key_value_records.js
+
+      - name: Test native entity-factory record transfers in Debug
+        run: node tools/smoke_entity_factory_key_value_records.js --debug
+
+      - name: Test native team data loading
+        run: node tools/smoke_team_data_loading_native.js
+
+      - name: Test native team data loading in Debug
+        run: node tools/smoke_team_data_loading_native.js --debug
+
+      - name: Test native entity input contracts
+        run: node tools/smoke_entity_input_native_contracts.js
+
+      - name: Test native entity input contracts in Debug
+        run: node tools/smoke_entity_input_native_contracts.js --debug
+
+      - name: Test native memory binary and GameData contracts
+        run: node tools/smoke_memory_binary_native_contracts.js
+
+      - name: Test native memory binary and GameData contracts in Debug
+        run: node tools/smoke_memory_binary_native_contracts.js --debug
+
+      - name: Prepare vcpkg on Linux
+        if: ${{ inputs.platform == 'linux' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          git clone --depth 1 https://github.com/microsoft/vcpkg.git external/vcpkg
+          external/vcpkg/bootstrap-vcpkg.sh -disableMetrics
+
+          if [ "${{ inputs.arch }}" = "x64" ]; then
+            echo "VCPKG_TARGET_TRIPLET=x64-linux" >> "${GITHUB_ENV}"
+          elif [ "${{ inputs.arch }}" = "x86" ]; then
+            echo "VCPKG_TARGET_TRIPLET=x86-linux" >> "${GITHUB_ENV}"
+          else
+            echo "Unsupported Linux architecture: ${{ inputs.arch }}" >&2
+            exit 1
+          fi
+
+          echo "VCPKG_ROOT=${GITHUB_WORKSPACE}/external/vcpkg" >> "${GITHUB_ENV}"
+
+      - name: Install mandatory external libraries on Linux
+        if: ${{ inputs.platform == 'linux' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          "${VCPKG_ROOT}/vcpkg" install \
+            "soci[mysql,sqlite3]" \
+            redis-plus-plus \
+            cpr \
+            --triplet "${VCPKG_TARGET_TRIPLET}" \
+            --overlay-ports "${GITHUB_WORKSPACE}/cmake/vcpkg-ports"
+
+      - name: Prepare vcpkg on Windows
+        if: ${{ inputs.platform == 'windows' }}
+        shell: pwsh
+        run: |
+          git clone --depth 1 https://github.com/microsoft/vcpkg.git external/vcpkg
+
+          if ($LASTEXITCODE -ne 0) {
+            throw "Clone vcpkg failed with exit code $LASTEXITCODE"
+          }
+
+          external\vcpkg\bootstrap-vcpkg.bat -disableMetrics
+
+          if ($LASTEXITCODE -ne 0) {
+            throw "Bootstrap vcpkg failed with exit code $LASTEXITCODE"
+          }
+
+          if ("${{ inputs.arch }}" -eq "x64") {
+            "VCPKG_TARGET_TRIPLET=x64-windows-static" >> $env:GITHUB_ENV
+          } elseif ("${{ inputs.arch }}" -eq "x86") {
+            "VCPKG_TARGET_TRIPLET=x86-windows-static" >> $env:GITHUB_ENV
+          } else {
+            throw "Unsupported Windows architecture: ${{ inputs.arch }}"
+          }
+
+          "VCPKG_ROOT=$env:GITHUB_WORKSPACE\external\vcpkg" >> $env:GITHUB_ENV
+
+      - name: Install mandatory external libraries on Windows
+        if: ${{ inputs.platform == 'windows' }}
+        shell: pwsh
+        run: |
+          & "$env:VCPKG_ROOT\vcpkg.exe" install `
+            "soci[mysql,sqlite3]" `
+            redis-plus-plus `
+            cpr `
+            --triplet "$env:VCPKG_TARGET_TRIPLET" `
+            --overlay-ports "$env:GITHUB_WORKSPACE\cmake\vcpkg-ports"
+
+      - name: Checkout pinned HL2SDK ref on Linux
+        if: ${{ inputs.platform == 'linux' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          mkdir -p external
+          git init "external/hl2sdk-${{ inputs.safe_name }}"
+          git -C "external/hl2sdk-${{ inputs.safe_name }}" remote add origin "${HL2SDK_REMOTE}"
+          git -C "external/hl2sdk-${{ inputs.safe_name }}" fetch --depth 1 origin "${{ inputs.sdk_ref }}"
+          git -C "external/hl2sdk-${{ inputs.safe_name }}" checkout --detach FETCH_HEAD
+
+      - name: Checkout pinned HL2SDK ref on Windows
+        if: ${{ inputs.platform == 'windows' }}
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path external | Out-Null
+          $strSDKDirectory = "external/hl2sdk-${{ inputs.safe_name }}"
+          git init $strSDKDirectory
+
+          if ($LASTEXITCODE -ne 0) {
+            throw "Initialize HL2SDK repository failed with exit code $LASTEXITCODE"
+          }
+
+          git -C $strSDKDirectory remote add origin "$env:HL2SDK_REMOTE"
+
+          if ($LASTEXITCODE -ne 0) {
+            throw "Configure HL2SDK remote failed with exit code $LASTEXITCODE"
+          }
+
+          git -C $strSDKDirectory fetch --depth 1 origin "${{ inputs.sdk_ref }}"
+
+          if ($LASTEXITCODE -ne 0) {
+            throw "Fetch pinned HL2SDK ref failed with exit code $LASTEXITCODE"
+          }
+
+          git -C $strSDKDirectory checkout --detach FETCH_HEAD
+
+          if ($LASTEXITCODE -ne 0) {
+            throw "Checkout pinned HL2SDK ref failed with exit code $LASTEXITCODE"
+          }
+
+      - name: Restore V8 cache
+        uses: actions/cache/restore@v4
+        with:
+          path: external/v8
+          key: ${{ inputs.v8_cache_key }}
+
+      - name: Configure SourceJS on Linux
+        if: ${{ inputs.platform == 'linux' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          cmake -S . -B "build/${{ inputs.platform }}-${{ inputs.safe_name }}-${SOURCEJS_CONFIG}" \
+            -G Ninja \
+            -DCMAKE_BUILD_TYPE="${SOURCEJS_CONFIG}" \
+            -DSOURCEJS_PLATFORM="${{ inputs.platform }}" \
+            -DSOURCEJS_ARCH="${{ inputs.arch }}" \
+            -DSOURCEJS_SDK_BRANCH="${{ inputs.sdk_branch }}" \
+            -DHL2SDK_ROOT="${GITHUB_WORKSPACE}/external/hl2sdk-${{ inputs.safe_name }}" \
+            -DV8_ROOT="${V8_ROOT}" \
+            -DV8_CONFIG="${{ inputs.v8_config }}" \
+            -DCMAKE_TOOLCHAIN_FILE="${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake" \
+            -DVCPKG_TARGET_TRIPLET="${VCPKG_TARGET_TRIPLET}"
+
+      - name: Configure SourceJS on Windows
+        if: ${{ inputs.platform == 'windows' }}
+        shell: pwsh
+        run: |
+          $strBuildDirectory = "build/${{ inputs.platform }}-${{ inputs.safe_name }}-$env:SOURCEJS_CONFIG"
+          $strSDKDirectory = Join-Path $env:GITHUB_WORKSPACE "external/hl2sdk-${{ inputs.safe_name }}"
+
+          cmake -S . -B $strBuildDirectory `
+            -G "Visual Studio 17 2022" `
+            -A "${{ inputs.visual_studio_arch }}" `
+            -DCMAKE_BUILD_TYPE="$env:SOURCEJS_CONFIG" `
+            -DSOURCEJS_PLATFORM="${{ inputs.platform }}" `
+            -DSOURCEJS_ARCH="${{ inputs.arch }}" `
+            -DSOURCEJS_SDK_BRANCH="${{ inputs.sdk_branch }}" `
+            -DHL2SDK_ROOT="$strSDKDirectory" `
+            -DV8_ROOT="$env:V8_ROOT" `
+            -DV8_CONFIG="${{ inputs.v8_config }}" `
+            -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake" `
+            -DVCPKG_TARGET_TRIPLET="$env:VCPKG_TARGET_TRIPLET"
+
+      - name: Build SourceJS on Linux
+        if: ${{ inputs.platform == 'linux' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          cmake --build "build/${{ inputs.platform }}-${{ inputs.safe_name }}-${SOURCEJS_CONFIG}" --parallel "$(nproc)"
+
+      - name: Build SourceJS on Windows
+        if: ${{ inputs.platform == 'windows' }}
+        shell: pwsh
+        run: |
+          $strBuildDirectory = "build/${{ inputs.platform }}-${{ inputs.safe_name }}-$env:SOURCEJS_CONFIG"
+          cmake --build $strBuildDirectory --config "$env:SOURCEJS_CONFIG" --parallel
+
+      - name: Verify native binding error contracts with real V8
+        run: node tools/smoke_module_binding_errors_v8.js --build-tree "build/${{ inputs.platform }}-${{ inputs.safe_name }}-${{ env.SOURCEJS_CONFIG }}"
+
+      - name: Verify native dialog and SteamID contracts with real V8
+        run: node tools/smoke_messages_recipient_steam_v8.js --build-tree "build/${{ inputs.platform }}-${{ inputs.safe_name }}-${{ env.SOURCEJS_CONFIG }}"
+
+      - name: Verify mandatory external libraries in Linux binary
+        if: ${{ inputs.platform == 'linux' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          strBinary="build/${{ inputs.platform }}-${{ inputs.safe_name }}-${SOURCEJS_CONFIG}/sourcejs.so"
+          strSymbols="$(mktemp)"
+          trap 'rm -f "${strSymbols}"' EXIT
+
+          readelf --wide --syms --demangle "${strBinary}" > "${strSymbols}"
+
+          if ! awk '
+            ($7 == "UND") && ($0 ~ /cpr::|soci::|sw::redis::|register_factory_mysql|register_factory_sqlite3/) {
+              print
+              bUnresolved = 1
+            }
+            END {
+              exit bUnresolved ? 1 : 0
+            }
+          ' "${strSymbols}"; then
+            echo "Mandatory external library symbols remain unresolved in ${strBinary}." >&2
+            exit 1
+          fi
+
+          for strPattern in "cpr::" "soci::" "sw::redis::" "register_factory_mysql" "register_factory_sqlite3"; do
+            if ! awk -v strPattern="${strPattern}" '
+              ($7 != "UND") && index($0, strPattern) {
+                bFound = 1
+              }
+              END {
+                exit bFound ? 0 : 1
+              }
+            ' "${strSymbols}"; then
+              echo "Mandatory external library symbol is missing from ${strBinary}: ${strPattern}" >&2
+              exit 1
+            fi
+          done
+
+      - name: Install package on Linux
+        if: ${{ inputs.platform == 'linux' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          cmake --install "build/${{ inputs.platform }}-${{ inputs.safe_name }}-${SOURCEJS_CONFIG}" \
+            --prefix "${GITHUB_WORKSPACE}/package/sourcejs-${{ inputs.platform }}-${{ inputs.safe_name }}-${{ inputs.arch }}"
+
+      - name: Install package on Windows
+        if: ${{ inputs.platform == 'windows' }}
+        shell: pwsh
+        run: |
+          $strBuildDirectory = "build/${{ inputs.platform }}-${{ inputs.safe_name }}-$env:SOURCEJS_CONFIG"
+          $strPackageDirectory = Join-Path $env:GITHUB_WORKSPACE "package/sourcejs-${{ inputs.platform }}-${{ inputs.safe_name }}-${{ inputs.arch }}"
+          cmake --install $strBuildDirectory --config "$env:SOURCEJS_CONFIG" --prefix $strPackageDirectory
+
+      - name: Verify Linux package layout
+        if: ${{ inputs.platform == 'linux' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          strPackageDirectory="${GITHUB_WORKSPACE}/package/sourcejs-${{ inputs.platform }}-${{ inputs.safe_name }}-${{ inputs.arch }}"
+          strBinary="${strPackageDirectory}/addons/sourcejs/bin/sourcejs.so"
+          test -f "${strPackageDirectory}/addons/sourcejs.vdf"
+          test -f "$strBinary"
+          test ! -e "${strPackageDirectory}/addons/sourcejs.so"
+          strDynamicSection="$(readelf -Wd "$strBinary")"
+          if grep -qw TEXTREL <<< "$strDynamicSection"; then
+            echo "Linux package contains text relocations: $strBinary" >&2
+            exit 1
+          fi
+
+          test -d "${strPackageDirectory}/addons/sourcejs"
+          test -d "${strPackageDirectory}/addons/sourcejs/bin"
+          test -d "${strPackageDirectory}/addons/sourcejs/gamedata"
+          test -f "${strPackageDirectory}/addons/sourcejs/gamedata/.keep"
+          test ! -e "${strPackageDirectory}/addons/sourcejs/gamedata/SourceMod"
+          test ! -e "${strPackageDirectory}/addons/sourcejs/gamedata/sdktools.games"
+          test ! -e "${strPackageDirectory}/addons/sourcejs/gamedata/sm-tf2.games.txt"
+          test ! -e "${strPackageDirectory}/addons/sourcejs/include"
+          test -f "${strPackageDirectory}/addons/sourcejs/docs/sourcejs/architecture.md"
+          test -f "${strPackageDirectory}/addons/sourcejs/docs/sourcejs/external-libraries.md"
+          test -d "${strPackageDirectory}/addons/sourcejs/extensions"
+          test -f "${strPackageDirectory}/addons/sourcejs/extensions/.keep"
+          test ! -e "${strPackageDirectory}/addons/sourcejs/extensions/echo"
+          test -f "${strPackageDirectory}/addons/sourcejs/package-manifest.json"
+          test -d "${strPackageDirectory}/addons/sourcejs/packages/sourcejs"
+          test -f "${strPackageDirectory}/addons/sourcejs/packages/sourcejs/index.js"
+          test -f "${strPackageDirectory}/addons/sourcejs/packages/sourcejs/entities/engines/csgo/csgo.js"
+          test -f "${strPackageDirectory}/addons/sourcejs/packages/sourcejs/messages/colors/saytext2.js"
+          test -f "${strPackageDirectory}/addons/sourcejs/packages/sourcejs/players/engines/orangebox/cstrike.js"
+          test -f "${strPackageDirectory}/addons/sourcejs/packages/sourcejs/weapons/engines/csgo.js"
+          test -d "${strPackageDirectory}/addons/sourcejs/data"
+          test -f "${strPackageDirectory}/addons/sourcejs/data/languages.ini"
+          test -f "${strPackageDirectory}/addons/sourcejs/data/sourcejs/memory/l4d2/GlobalAddresses.ini"
+          test -f "${strPackageDirectory}/addons/sourcejs/data/sourcejs/teams/left4dead2.ini"
+          test -f "${strPackageDirectory}/addons/sourcejs/data/sourcejs/weapons/constants/csgo/WeaponID.ini"
+          test -d "${strPackageDirectory}/addons/sourcejs/plugins"
+          test -f "${strPackageDirectory}/addons/sourcejs/plugins/server-administration/index.js"
+          test -f "${strPackageDirectory}/addons/sourcejs/plugins/server-administration/plugin.json"
+          test -f "${strPackageDirectory}/addons/sourcejs/plugins/disabled/api-external-libraries/index.js"
+          test -f "${strPackageDirectory}/addons/sourcejs/plugins/disabled/api-external-libraries/plugin.json"
+          test -f "${strPackageDirectory}/addons/sourcejs/plugins/disabled/plugin-bus/index.js"
+          test -f "${strPackageDirectory}/addons/sourcejs/plugins/disabled/plugin-bus/plugin.json"
+          test -d "${strPackageDirectory}/cfg/sourcejs"
+          test -d "${strPackageDirectory}/logs/sourcejs"
+          test -d "${strPackageDirectory}/resource/sourcejs"
+          test -d "${strPackageDirectory}/sound/sourcejs"
+
+          python3 tools/verify_package_copy.py \
+            --package-root "${strPackageDirectory}/addons/sourcejs/packages/sourcejs"
+
+      - name: Verify Windows package layout
+        if: ${{ inputs.platform == 'windows' }}
+        shell: pwsh
+        run: |
+          $strPackageDirectory = Join-Path $env:GITHUB_WORKSPACE "package/sourcejs-${{ inputs.platform }}-${{ inputs.safe_name }}-${{ inputs.arch }}"
+
+          $arrRequiredPaths = @(
+            @{ Path = "addons/sourcejs.vdf"; PathType = "Leaf" },
+            @{ Path = "addons/sourcejs/bin/sourcejs.dll"; PathType = "Leaf" },
+            @{ Path = "addons/sourcejs"; PathType = "Container" },
+            @{ Path = "addons/sourcejs/bin"; PathType = "Container" },
+            @{ Path = "addons/sourcejs/gamedata"; PathType = "Container" },
+            @{ Path = "addons/sourcejs/gamedata/.keep"; PathType = "Leaf" },
+            @{ Path = "addons/sourcejs/docs/sourcejs/architecture.md"; PathType = "Leaf" },
+            @{ Path = "addons/sourcejs/docs/sourcejs/external-libraries.md"; PathType = "Leaf" },
+            @{ Path = "addons/sourcejs/extensions"; PathType = "Container" },
+            @{ Path = "addons/sourcejs/extensions/.keep"; PathType = "Leaf" },
+            @{ Path = "addons/sourcejs/package-manifest.json"; PathType = "Leaf" },
+            @{ Path = "addons/sourcejs/packages/sourcejs"; PathType = "Container" },
+            @{ Path = "addons/sourcejs/packages/sourcejs/index.js"; PathType = "Leaf" },
+            @{ Path = "addons/sourcejs/packages/sourcejs/entities/engines/csgo/csgo.js"; PathType = "Leaf" },
+            @{ Path = "addons/sourcejs/packages/sourcejs/messages/colors/saytext2.js"; PathType = "Leaf" },
+            @{ Path = "addons/sourcejs/packages/sourcejs/players/engines/orangebox/cstrike.js"; PathType = "Leaf" },
+            @{ Path = "addons/sourcejs/packages/sourcejs/weapons/engines/csgo.js"; PathType = "Leaf" },
+            @{ Path = "addons/sourcejs/data"; PathType = "Container" },
+            @{ Path = "addons/sourcejs/data/languages.ini"; PathType = "Leaf" },
+            @{ Path = "addons/sourcejs/data/sourcejs/memory/l4d2/GlobalAddresses.ini"; PathType = "Leaf" },
+            @{ Path = "addons/sourcejs/data/sourcejs/teams/left4dead2.ini"; PathType = "Leaf" },
+            @{ Path = "addons/sourcejs/data/sourcejs/weapons/constants/csgo/WeaponID.ini"; PathType = "Leaf" },
+            @{ Path = "addons/sourcejs/plugins"; PathType = "Container" },
+            @{ Path = "addons/sourcejs/plugins/server-administration/index.js"; PathType = "Leaf" },
+            @{ Path = "addons/sourcejs/plugins/server-administration/plugin.json"; PathType = "Leaf" },
+            @{ Path = "addons/sourcejs/plugins/disabled/api-external-libraries/index.js"; PathType = "Leaf" },
+            @{ Path = "addons/sourcejs/plugins/disabled/api-external-libraries/plugin.json"; PathType = "Leaf" },
+            @{ Path = "addons/sourcejs/plugins/disabled/plugin-bus/index.js"; PathType = "Leaf" },
+            @{ Path = "addons/sourcejs/plugins/disabled/plugin-bus/plugin.json"; PathType = "Leaf" },
+            @{ Path = "cfg/sourcejs"; PathType = "Container" },
+            @{ Path = "logs/sourcejs"; PathType = "Container" },
+            @{ Path = "resource/sourcejs"; PathType = "Container" },
+            @{ Path = "sound/sourcejs"; PathType = "Container" }
+          )
+          foreach ($RequiredPath in $arrRequiredPaths) {
+            $strFullPath = Join-Path $strPackageDirectory $RequiredPath.Path
+            if (-not (Test-Path -LiteralPath $strFullPath -PathType $RequiredPath.PathType)) {
+              throw "Missing package path: $strFullPath (Expected=$($RequiredPath.PathType))"
+            }
+          }
+
+          foreach ($strPath in @("addons/sourcejs.dll", "addons/sourcejs/include", "addons/sourcejs/extensions/echo")) {
+            if (Test-Path -LiteralPath (Join-Path $strPackageDirectory $strPath)) {
+              throw "Unexpected package path: $strPath"
+            }
+          }
+
+          foreach ($strName in @("SourceMod", "sdktools.games", "sm-tf2.games.txt")) {
+            if (Test-Path -LiteralPath (Join-Path $strPackageDirectory "addons/sourcejs/gamedata/$strName")) {
+              throw "Downloaded SourceMod GameData must not be packaged: $strName"
+            }
+          }
+
+          python tools/verify_package_copy.py `
+            --package-root (Join-Path $strPackageDirectory "addons/sourcejs/packages/sourcejs")
+
+      - name: Upload package
+        uses: actions/upload-artifact@v4
+        with:
+          name: sourcejs-${{ inputs.platform }}-${{ inputs.safe_name }}-${{ inputs.arch }}
+          path: package/sourcejs-${{ inputs.platform }}-${{ inputs.safe_name }}-${{ inputs.arch }}/**
+          if-no-files-found: error
+          # Preserve .keep files that carry the empty runtime directories.
+          include-hidden-files: true

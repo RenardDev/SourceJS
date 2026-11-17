@@ -1,0 +1,65 @@
+vcpkg_from_github(
+	OUT_SOURCE_PATH SOURCE_PATH
+	REPO SOCI/soci
+	REF "v${VERSION}"
+	SHA512 0553fb7856c77158b229c33fb7a14402f9d740825db5b0c0c4cbbbc2596faa56b099f7e13bece5af506311c393e6fcb4e8b448522d15bba57c6dd0d23e6467c1
+	HEAD_REF master
+)
+
+string(COMPARE EQUAL "${VCPKG_LIBRARY_LINKAGE}" "dynamic" bSOCIDynamic)
+
+vcpkg_check_features(OUT_FEATURE_OPTIONS vecFeatureOptions
+	FEATURES
+		boost       WITH_BOOST
+		boost       CMAKE_REQUIRE_FIND_PACKAGE_Boost
+		empty       SOCI_EMPTY
+		mysql       SOCI_MYSQL
+		odbc        SOCI_ODBC
+		postgresql  SOCI_POSTGRESQL
+		sqlite3     SOCI_SQLITE3
+)
+
+vcpkg_cmake_configure(
+	SOURCE_PATH "${SOURCE_PATH}"
+	OPTIONS
+		-DSOCI_SHARED=${bSOCIDynamic}
+		-DSOCI_TESTS=OFF
+		-DSOCI_INSTALL=ON
+		-DSOCI_FMT_BUILTIN=OFF
+		-DSOCI_LTO=OFF
+		-DSOCI_DB2=OFF
+		-DSOCI_FIREBIRD=OFF
+		-DSOCI_ORACLE=OFF
+		${vecFeatureOptions}
+	MAYBE_UNUSED_VARIABLES
+		CMAKE_REQUIRE_FIND_PACKAGE_Boost
+)
+
+vcpkg_cmake_install()
+vcpkg_copy_pdbs()
+vcpkg_cmake_config_fixup(CONFIG_PATH lib/cmake/soci-${VERSION})
+
+file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug/share" "${CURRENT_PACKAGES_DIR}/debug/include")
+
+file(READ "${CMAKE_CURRENT_LIST_DIR}/usage" strUsageContent)
+set(vecEnabledBackends ${FEATURES})
+list(REMOVE_ITEM vecEnabledBackends core boost)
+if("${vecEnabledBackends}" STREQUAL "")
+	string(APPEND strUsageContent
+		"\n"
+		"This SOCI build doesn't include any backend and may not be useful.\n"
+	)
+else()
+	string(APPEND strUsageContent
+		"\n"
+		"    # Enabled SOCI backend features:\n"
+	)
+
+	foreach(strBackend IN LISTS vecEnabledBackends)
+		string(APPEND strUsageContent "    # - ${strBackend}\n")
+	endforeach()
+endif()
+
+file(WRITE "${CURRENT_PACKAGES_DIR}/share/${PORT}/usage" "${strUsageContent}")
+
+vcpkg_install_copyright(FILE_LIST "${SOURCE_PATH}/LICENSE_1_0.txt")

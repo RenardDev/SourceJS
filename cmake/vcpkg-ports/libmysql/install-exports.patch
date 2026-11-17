@@ -1,0 +1,144 @@
+diff --git a/cmake/install_macros.cmake b/cmake/install_macros.cmake
+index 4ffd8b28..be6e2f36 100644
+--- a/cmake/install_macros.cmake
++++ b/cmake/install_macros.cmake
+@@ -114,8 +114,36 @@ FUNCTION(MYSQL_INSTALL_TARGET target_arg)
+   IF(ARG_NAMELINK_SKIP)
+     SET(LIBRARY_INSTALL_ARGS NAMELINK_SKIP)
+   ENDIF()
++  IF((target STREQUAL "libmysql") OR (target STREQUAL "mysqlclient"))
++    TARGET_INCLUDE_DIRECTORIES(${target} INTERFACE $<INSTALL_INTERFACE:include>)
++    IF(target STREQUAL "mysqlclient")
++      SET_TARGET_PROPERTIES(${target} PROPERTIES EXPORT_NAME libmysql)
++    ENDIF()
++
++    FILE(WRITE "${CMAKE_CURRENT_BINARY_DIR}/unofficial-libmysql-config.cmake"
++      "# Generated only: vcpkg libmysql package configuration.\n"
++      "\n"
++      "INCLUDE(CMakeFindDependencyMacro)\n"
++      "\n"
++      "FIND_DEPENDENCY(OpenSSL)\n"
++      "FIND_DEPENDENCY(Threads)\n"
++      "FIND_DEPENDENCY(ZLIB)\n"
++      "FIND_DEPENDENCY(zstd CONFIG)\n"
++      "\n"
++      "INCLUDE(\"\${CMAKE_CURRENT_LIST_DIR}/unofficial-libmysql-targets.cmake\")\n"
++      "\n"
++      "IF(NOT TARGET ${target})\n"
++      "\tADD_LIBRARY(${target} INTERFACE IMPORTED)\n"
++      "\tSET_TARGET_PROPERTIES(${target} PROPERTIES INTERFACE_LINK_LIBRARIES unofficial::libmysql::libmysql)\n"
++      "ENDIF()\n"
++    )
++    INSTALL(FILES "${CMAKE_CURRENT_BINARY_DIR}/unofficial-libmysql-config.cmake" DESTINATION "share/unofficial-libmysql")
++    INSTALL(EXPORT "unofficial-libmysql-targets" NAMESPACE unofficial::libmysql:: DESTINATION "share/unofficial-libmysql")
++    SET(LIBRARY_EXPORT_ARGS EXPORT unofficial-libmysql-targets)
++  ENDIF()
+   INSTALL(TARGETS ${target}
+-    RUNTIME DESTINATION ${ARG_DESTINATION} ${COMP}
++    ${LIBRARY_EXPORT_ARGS}
++    RUNTIME DESTINATION bin ${COMP}
+     ARCHIVE DESTINATION ${ARG_DESTINATION} ${COMP}
+     LIBRARY DESTINATION ${ARG_DESTINATION} ${COMP} ${LIBRARY_INSTALL_ARGS})
+   SET(INSTALL_LOCATION ${ARG_DESTINATION} )
+diff --git a/cmake/libutils.cmake b/cmake/libutils.cmake
+index 71a8fa69..6fde5b44 100644
+--- a/cmake/libutils.cmake
++++ b/cmake/libutils.cmake
+@@ -388,8 +388,12 @@ MACRO(MERGE_LIBRARIES_SHARED TARGET_ARG)
+     IF(ARG_NAMELINK_SKIP)
+       SET(INSTALL_ARGS NAMELINK_SKIP)
+     ENDIF()
++    IF(INSTALL_STATIC_LIBRARIES)
++      SET_TARGET_PROPERTIES(${TARGET} PROPERTIES EXCLUDE_FROM_ALL TRUE)
++    ELSE()
+     MYSQL_INSTALL_TARGET(${TARGET} DESTINATION "${DESTINATION}" ${COMP}
+       ${INSTALL_ARGS})
++    ENDIF()
+   ENDIF()
+
+   IF(WIN32)
+@@ -566,6 +570,8 @@ MACRO(MERGE_CONVENIENCE_LIBRARIES TARGET_ARG)
+     ENDIF()
+     IF(INSTALL_STATIC_LIBRARIES)
+       MYSQL_INSTALL_TARGET(${TARGET} DESTINATION "${INSTALL_LIBDIR}" ${COMP})
++    ELSE()
++      SET_TARGET_PROPERTIES(${TARGET} PROPERTIES EXCLUDE_FROM_ALL TRUE)
+     ENDIF()
+   ENDIF()
+ ENDMACRO(MERGE_CONVENIENCE_LIBRARIES)
+diff --git a/scripts/CMakeLists.txt b/scripts/CMakeLists.txt
+index 272ffcf3..d0773022 100644
+--- a/scripts/CMakeLists.txt
++++ b/scripts/CMakeLists.txt
+@@ -321,6 +321,8 @@ MACRO(EXTRACT_LINK_LIBRARIES target var)
+     FOREACH(lib ${TARGET_LIB_DEPENDS})
+       IF (lib MATCHES "^\\-l")
+         SET(${var} "${${var}} ${lib} ")
++      ELSEIF((lib MATCHES "^ext::(openssl|zlib|zstd)$") AND NOT WIN32)
++        LIST(APPEND vecExternalTargets "${CMAKE_MATCH_1}")
+       ELSEIF (lib MATCHES "^ext::")
+         STRING(REGEX MATCH "ext::([a-z]+)" MATCH_LIB "${lib}")
+         SET(SYSTEM_LIB ${CMAKE_MATCH_1})
+@@ -330,6 +332,8 @@ MACRO(EXTRACT_LINK_LIBRARIES target var)
+         ELSE()
+           SET(${var} "${${var}} ${SYSTEM_LINK_FLAG} ")
+         ENDIF()
++      ELSEIF(TARGET "${lib}" AND NOT WIN32)
++        # Merged or shared target, not an external dependency.
+       ELSEIF (lib MATCHES "^\\-L")
+         # Search directory. Test on FreeBSD: -L/usr/local/lib -lunwind
+         SET(${var} "${${var}} ${lib} ")
+@@ -369,6 +373,7 @@ IF(MSVC)
+   GET_TARGET_PROPERTY(LIBMYSQL_OS_SHLIB_VERSION mysqlclient VERSION)
+   GET_TARGET_PROPERTY(LIBMYSQL_OS_OUTPUT_NAME mysqlclient OUTPUT_NAME)
+ ELSE()
++  EXTRACT_LINK_LIBRARIES(libmysql CLIENT_LIBS)
+   GET_TARGET_PROPERTY(LIBMYSQL_OS_SHLIB_VERSION libmysql VERSION)
+   GET_TARGET_PROPERTY(LIBMYSQL_OS_OUTPUT_NAME libmysql OUTPUT_NAME)
+ ENDIF()
+@@ -388,6 +393,11 @@ IF (WITH_SSL STREQUAL "system")
+       "${CONFIG_LIBS_PRIVATE}")
+   ENDIF()
+ ENDIF()
++
++LIST(APPEND CONFIG_REQUIRES_PRIVATE ${vecExternalTargets})
++LIST(TRANSFORM CONFIG_REQUIRES_PRIVATE REPLACE "^zstd$" "libzstd")
++LIST(REMOVE_DUPLICATES CONFIG_REQUIRES_PRIVATE)
++LIST(JOIN CONFIG_REQUIRES_PRIVATE " " CONFIG_REQUIRES_PRIVATE)
+
+ MESSAGE(STATUS "CONFIG_CLIENT_LIBS ${CONFIG_CLIENT_LIBS}")
+ MESSAGE(STATUS "CONFIG_LIBS_PRIVATE ${CONFIG_LIBS_PRIVATE}")
+diff --git a/scripts/mysql_config.sh b/scripts/mysql_config.sh
+index 78dd332c..3a27a1d5 100644
+--- a/scripts/mysql_config.sh
++++ b/scripts/mysql_config.sh
+@@ -121,5 +121,29 @@ fi
+ libs="-L$pkglibdir@RPATH_OPTION@"
+ libs="$libs -l@LIBMYSQL_OS_OUTPUT_NAME@ @CONFIG_CLIENT_LIBS@"
++if test -n "@CONFIG_REQUIRES_PRIVATE@"; then
++  if test -z "${PKG_CONFIG}"; then
++    if pkg-config --version >/dev/null 2>&1; then
++      PKG_CONFIG=pkg-config
++    elif pkgconf --version >/dev/null 2>&1; then
++      PKG_CONFIG=pkgconf
++    else
++      PKG_CONFIG=false
++    fi
++  fi
++
++  if strDependencyLibraries=$(${PKG_CONFIG} --libs @CONFIG_REQUIRES_PRIVATE@); then
++    libs="$libs $strDependencyLibraries"
++  else
++    for strArgument; do
++      case "$strArgument" in
++        --libs|--libs_r)
++          printf '%s\n' '[ERROR] mysql_config: unable to resolve private library dependencies.' >&2
++          exit 1
++          ;;
++      esac
++    done
++  fi
++fi
+
+ cflags="-I$pkgincludedir @CFLAGS@"
+ cxxflags="-I$pkgincludedir @CXXFLAGS@"

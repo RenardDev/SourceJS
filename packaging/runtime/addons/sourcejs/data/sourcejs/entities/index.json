@@ -1,0 +1,214 @@
+{
+	"Format": 1,
+	"Groups": {
+		"bms": [
+			"bms/CBaseAnimating.ini",
+			"bms/CBaseCombatCharacter.ini",
+			"bms/CBaseCombatWeapon.ini",
+			"bms/CBaseEntity.ini",
+			"bms/CBaseFlex.ini",
+			"bms/CBasePlayer.ini",
+			"bms/CBlackMesaPlayer.ini",
+			"bms/CBreakableProp.ini",
+			"bms/CDynamicProp.ini",
+			"bms/CParticleSystem.ini",
+			"bms/CTeam.ini",
+			"bms/CWorld.ini"
+		],
+		"common": [
+			"CBaseAnimating.ini",
+			"CBaseButton.ini",
+			"CBaseCombatCharacter.ini",
+			"CBaseCombatWeapon.ini",
+			"CBaseDoor.ini",
+			"CBaseEntity.ini",
+			"CBaseGrenade.ini",
+			"CBasePlayer.ini",
+			"CBasePropDoor.ini",
+			"CBaseTrigger.ini",
+			"CBaseViewModel.ini",
+			"CBreakable.ini",
+			"CBreakableProp.ini",
+			"CDynamicLight.ini",
+			"CDynamicProp.ini",
+			"CEntityDissolve.ini",
+			"CEnvExplosion.ini",
+			"CEnvProjectedTexture.ini",
+			"CEnvSpark.ini",
+			"CFire.ini",
+			"CFogController.ini",
+			"CFuncRotating.ini",
+			"CGameEnd.ini",
+			"CParticleSystem.ini",
+			"CPointHurt.ini",
+			"CPointServerCommand.ini",
+			"CPrecipitation.ini",
+			"CSmokeStack.ini",
+			"CSpriteTrail.ini",
+			"CStripWeapons.ini",
+			"CTeam.ini",
+			"CWorld.ini"
+		],
+		"csgo": [
+			"csgo/CBaseCombatCharacter.ini",
+			"csgo/CBaseCombatWeapon.ini",
+			"csgo/CBaseCSGrenadeProjectile.ini",
+			"csgo/CBaseEntity.ini",
+			"csgo/CBaseGrenade.ini",
+			"csgo/CBasePlayer.ini",
+			"csgo/CBombTarget.ini",
+			"csgo/CBreakableProp.ini",
+			"csgo/CCSPlayer.ini",
+			"csgo/CDecoyProjectile.ini",
+			"csgo/CDynamicProp.ini",
+			"csgo/CEconEntity.ini",
+			"csgo/CEnvProjectedTexture.ini",
+			"csgo/CFlashbangProjectile.ini",
+			"csgo/CHEGrenadeProjectile.ini",
+			"csgo/CHostage.ini",
+			"csgo/CMapInfo.ini",
+			"csgo/CMolotovProjectile.ini",
+			"csgo/CParticleSystem.ini",
+			"csgo/CPlantedC4.ini",
+			"csgo/CPointWorldText.ini",
+			"csgo/CSensorGrenadeProjectile.ini",
+			"csgo/CSmokeGrenadeProjectile.ini",
+			"csgo/CTeam.ini"
+		],
+		"gmod": [
+			"gmod/CBaseCombatCharacter.ini",
+			"gmod/CBaseCombatWeapon.ini",
+			"gmod/CBaseEntity.ini",
+			"gmod/CBasePlayer.ini",
+			"gmod/CGMOD_Player.ini"
+		],
+		"l4d2": [
+			"l4d2/CBaseCombatCharacter.ini",
+			"l4d2/CBaseCombatWeapon.ini",
+			"l4d2/CBaseEntity.ini",
+			"l4d2/CBasePlayer.ini",
+			"l4d2/CBreakable.ini",
+			"l4d2/CBreakableProp.ini",
+			"l4d2/CCSPlayer.ini",
+			"l4d2/CDynamicProp.ini",
+			"l4d2/CEnvProjectedTexture.ini",
+			"l4d2/CPrecipitation.ini",
+			"l4d2/CStripWeapons.ini",
+			"l4d2/CTerrorGun.ini",
+			"l4d2/CTerrorWeapon.ini",
+			"l4d2/CWorld.ini"
+		],
+		"orangebox": [
+			"orangebox/CBaseAnimating.ini",
+			"orangebox/CBaseCombatCharacter.ini",
+			"orangebox/CBaseEntity.ini",
+			"orangebox/CBasePlayer.ini",
+			"orangebox/CBreakableProp.ini",
+			"orangebox/CDynamicProp.ini",
+			"orangebox/CEnvProjectedTexture.ini",
+			"orangebox/CParticleSystem.ini",
+			"orangebox/CTeam.ini"
+		],
+		"orangebox/cstrike": [
+			"orangebox/cstrike/CBaseAnimating.ini",
+			"orangebox/cstrike/CBaseCombatWeapon.ini",
+			"orangebox/cstrike/CBaseCSGrenade.ini",
+			"orangebox/cstrike/CBaseCSGrenadeProjectile.ini",
+			"orangebox/cstrike/CBaseGrenade.ini",
+			"orangebox/cstrike/CBasePlayer.ini",
+			"orangebox/cstrike/CBombTarget.ini",
+			"orangebox/cstrike/CCSPlayer.ini",
+			"orangebox/cstrike/CHostage.ini",
+			"orangebox/cstrike/CMapInfo.ini",
+			"orangebox/cstrike/CPlantedC4.ini",
+			"orangebox/cstrike/CSmokeGrenadeProjectile.ini"
+		],
+		"orangebox/dod": [
+			"orangebox/dod/CBaseCombatWeapon.ini",
+			"orangebox/dod/CBasePlayer.ini",
+			"orangebox/dod/CDODPlayer.ini"
+		],
+		"orangebox/ep2": [
+			"orangebox/ep2/CBaseFlex.ini"
+		],
+		"orangebox/episodic": [
+			"orangebox/episodic/CBaseFlex.ini"
+		],
+		"orangebox/hl2": [
+			"orangebox/hl2/CBaseFlex.ini"
+		],
+		"orangebox/hl2mp": [
+			"orangebox/hl2mp/CBaseCombatWeapon.ini",
+			"orangebox/hl2mp/CBaseFlex.ini",
+			"orangebox/hl2mp/CBaseGrenade.ini",
+			"orangebox/hl2mp/CBasePlayer.ini",
+			"orangebox/hl2mp/CGrenadeFrag.ini",
+			"orangebox/hl2mp/CHL2_Player.ini",
+			"orangebox/hl2mp/CHL2MP_Player.ini",
+			"orangebox/hl2mp/CItem.ini",
+			"orangebox/hl2mp/CPropCombineBall.ini"
+		],
+		"orangebox/portal": [
+			"orangebox/portal/CBaseFlex.ini",
+			"orangebox/portal/CPortal_Player.ini"
+		],
+		"orangebox/tf": [
+			"orangebox/tf/CBaseCombatCharacter.ini",
+			"orangebox/tf/CBaseCombatWeapon.ini",
+			"orangebox/tf/CBaseEntity.ini",
+			"orangebox/tf/CBasePlayer.ini",
+			"orangebox/tf/CEconEntity.ini",
+			"orangebox/tf/CTFPlayer.ini"
+		]
+	},
+	"Branches": {
+		"bgt": [],
+		"blade": [],
+		"bms": [
+			"bms"
+		],
+		"contagion": [],
+		"csgo": [
+			"csgo"
+		],
+		"css": [
+			"orangebox",
+			"orangebox/cstrike"
+		],
+		"darkm": [],
+		"dods": [
+			"orangebox",
+			"orangebox/dod"
+		],
+		"doi": [],
+		"episode1": [],
+		"eye": [],
+		"gmod": [
+			"gmod"
+		],
+		"hl2dm": [
+			"orangebox",
+			"orangebox/hl2mp"
+		],
+		"insurgency": [],
+		"l4d": [],
+		"l4d2": [
+			"l4d2"
+		],
+		"mcv": [],
+		"nucleardawn": [],
+		"orangebox": [
+			"orangebox"
+		],
+		"portal2": [],
+		"pvkii": [],
+		"sdk2013": [
+			"orangebox"
+		],
+		"swarm": [],
+		"tf2": [
+			"orangebox",
+			"orangebox/tf"
+		]
+	}
+}

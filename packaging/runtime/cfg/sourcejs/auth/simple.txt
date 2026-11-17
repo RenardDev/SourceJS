@@ -1,0 +1,1 @@
+# Each SteamID on its own line grants all permissions.

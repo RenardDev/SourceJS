@@ -1,0 +1,14 @@
+{
+	"left4dead2": {
+		"SpriteBeam": "sprites/laserbeam.vmt",
+		"SpriteHalo": "sprites/glow01.vmt",
+		"SpriteExplosion": "sprites/floorfire4_.vmt",
+		"SoundBlip": "buttons/blip1.wav",
+		"SoundBeep": "weapons/hegrenade/beep.wav",
+		"SoundFinal": "ui/beep22.wav",
+		"SoundBoom": "weapons/hegrenade/explode3.wav",
+		"ExplosionFallback": "particle/fire_explosion_1/fire_explosion_1.vmt",
+		"Team2BeaconColor": "75,75,255,255",
+		"Team3BeaconColor": "255,75,75,255"
+	}
+}

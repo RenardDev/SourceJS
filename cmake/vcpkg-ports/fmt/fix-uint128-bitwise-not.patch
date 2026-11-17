@@ -1,0 +1,15 @@
+diff --git a/include/fmt/format.h b/include/fmt/format.h
+index 5044befd..dc6bc683 100644
+--- a/include/fmt/format.h
++++ b/include/fmt/format.h
+@@ -325,7 +325,10 @@ class uint128 {
+   friend constexpr auto operator&(const uint128& lhs, const uint128& rhs)
+       -> uint128 {
+     return {lhs.hi_ & rhs.hi_, lhs.lo_ & rhs.lo_};
+   }
++  friend constexpr uint128 operator~(uint128 const& Value) {
++    return {~Value.hi_, ~Value.lo_};
++  }
+   friend FMT_CONSTEXPR auto operator+(const uint128& lhs, const uint128& rhs)
+       -> uint128 {
+     auto result = uint128(lhs);

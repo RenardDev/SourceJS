@@ -1,0 +1,38 @@
+{
+	"Version": 1,
+	"linux": {
+		"x86": {
+			"l4d2": {
+				"CBaseAnimating": {
+					"Slots": 233,
+					"TypeName": "14CBaseAnimating",
+					"Methods": {
+						"GetBoneTransform": {
+							"Slot": 214,
+							"Symbol": "_ZN14CBaseAnimating16GetBoneTransformEiR11matrix3x4_t"
+						},
+						"GetAttachmentTransform": {
+							"Slot": 220,
+							"Symbol": "_ZN14CBaseAnimating13GetAttachmentEiR11matrix3x4_t"
+						}
+					}
+				}
+			}
+		}
+	},
+	"windows": {
+		"x86": {
+			"l4d2": {
+				"CBaseAnimating": {
+					"BaseClass": "CBaseEntity",
+					"Slots": 232,
+					"BaseOverrides": "+--------++++--++-----+-+-++--------+----------+-+--++-----+----------------------------------------------------------+--------+----------------------+-----------------------------++------------------",
+					"Methods": {
+						"GetBoneTransform": 213,
+						"GetAttachmentTransform": 219
+					}
+				}
+			}
+		}
+	}
+}

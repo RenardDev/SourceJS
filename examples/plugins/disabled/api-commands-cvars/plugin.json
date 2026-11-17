@@ -1,0 +1,8 @@
+{
+	"Name": "api-commands-cvars",
+	"Entry": "index.js",
+	"Autoload": false,
+	"Version": "1.0.0",
+	"Author": "SourceJS",
+	"Description": "Command, typed command, ConVar, tag and config examples."
+}

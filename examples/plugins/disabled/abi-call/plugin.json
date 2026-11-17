@@ -1,0 +1,6 @@
+{
+	"Name": "abi-call",
+	"Entry": "index.js",
+	"Autoload": false,
+	"Description": "Example SourceJS memory/hooks.CallFunction ABI and context usage."
+}

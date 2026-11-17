@@ -1,0 +1,6 @@
+{
+	"Name": "stock-player-actions-test",
+	"Entry": "index.js",
+	"Autoload": true,
+	"Description": "Isolated L4D2 server smoke fixture for player actions, movement, and SQLite."
+}

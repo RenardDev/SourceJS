@@ -1,0 +1,16 @@
+diff --git a/cmake/build_configurations/compiler_options.cmake b/cmake/build_configurations/compiler_options.cmake
+index d093d684..6d4841d2 100644
+--- a/cmake/build_configurations/compiler_options.cmake
++++ b/cmake/build_configurations/compiler_options.cmake
+@@ -70,8 +70,9 @@ IF(UNIX)
+   IF(MY_COMPILER_IS_GNU_OR_CLANG
+       AND NOT LINUX_ARM
+       AND NOT SOLARIS AND NOT LINUX_RHEL6 AND NOT LINUX_ALPINE)
+-    STRING_APPEND(COMMON_C_FLAGS     " -ftls-model=initial-exec")
+-    STRING_APPEND(COMMON_CXX_FLAGS   " -ftls-model=initial-exec")
++    # The client is linked into a dynamically loaded plugin; avoid requiring static TLS space.
++    STRING_APPEND(COMMON_C_FLAGS     " -ftls-model=global-dynamic")
++    STRING_APPEND(COMMON_CXX_FLAGS   " -ftls-model=global-dynamic")
+   ENDIF()
+
+   # Use STRING_PREPEND here, so command-line input can override our defaults.

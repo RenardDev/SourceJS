@@ -1,0 +1,8 @@
+{
+	"left4dead2": {
+		"MenuItemSound": "UI/menu_accept.wav",
+		"MenuPageSound": "UI/menu_focus.wav",
+		"MenuExitSound": "UI/menu_back.wav",
+		"MenuExitBackSound": "UI/menu_back.wav"
+	}
+}

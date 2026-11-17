@@ -1,0 +1,15 @@
+{
+	"Name": "SourceJS",
+	"Version": "@PROJECT_VERSION@",
+	"SDKBranch": "@SOURCEJS_SDK_BRANCH@",
+	"Platform": "@SOURCEJS_PLATFORM@",
+	"Architecture": "@SOURCEJS_ARCH@",
+	"Runtime": "v8",
+	"Entrypoint": "addons/sourcejs/bin/sourcejs",
+	"Packages": [
+		"addons/sourcejs/packages/sourcejs"
+	],
+	"Docs": "addons/sourcejs/docs/sourcejs",
+	"Plugins": "addons/sourcejs/plugins",
+	"Extensions": "addons/sourcejs/extensions"
+}

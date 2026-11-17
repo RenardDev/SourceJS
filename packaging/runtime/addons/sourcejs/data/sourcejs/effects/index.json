@@ -1,0 +1,142 @@
+{
+	"Format": 1,
+	"Groups": {
+		"bms": [
+			"bms/CBlackMesaFireBullets.ini",
+			"bms/CTE_TauBeam.ini",
+			"bms/CTEEffectDispatch.ini",
+			"bms/CTEPhysicsProp.ini",
+			"bms/CTEPlayerAnimEvent.ini",
+			"bms/CTEWeaponBullets.ini"
+		],
+		"csgo": [
+			"csgo/CTEEffectDispatch.ini",
+			"csgo/CTEFireBullets.ini",
+			"csgo/CTEFoundryHelpers.ini",
+			"csgo/CTEPhysicsProp.ini",
+			"csgo/CTEPlantBomb.ini",
+			"csgo/CTEPlayerAnimEvent.ini",
+			"csgo/CTERadioIcon.ini"
+		],
+		"common": [
+			"CTEArmorRicochet.ini",
+			"CTEBeamEntPoint.ini",
+			"CTEBeamEnts.ini",
+			"CTEBeamFollow.ini",
+			"CTEBeamLaser.ini",
+			"CTEBeamPoints.ini",
+			"CTEBeamRing.ini",
+			"CTEBeamRingPoint.ini",
+			"CTEBeamSpline.ini",
+			"CTEBloodSprite.ini",
+			"CTEBloodStream.ini",
+			"CTEBreakModel.ini",
+			"CTEBSPDecal.ini",
+			"CTEBubbles.ini",
+			"CTEBubbleTrail.ini",
+			"CTEClientProjectile.ini",
+			"CTEDecal.ini",
+			"CTEDust.ini",
+			"CTEDynamicLight.ini",
+			"CTEEnergySplash.ini",
+			"CTEExplosion.ini",
+			"CTEFizz.ini",
+			"CTEFootprintDecal.ini",
+			"CTEGaussExplosion.ini",
+			"CTEGlowSprite.ini",
+			"CTEImpact.ini",
+			"CTEKillPlayerAttachments.ini",
+			"CTELargeFunnel.ini",
+			"CTEMetalSparks.ini",
+			"CTEMuzzleFlash.ini",
+			"CTEPlayerDecal.ini",
+			"CTEProjectedDecal.ini",
+			"CTEShatterSurface.ini",
+			"CTEShowLine.ini",
+			"CTESmoke.ini",
+			"CTESparks.ini",
+			"CTESprite.ini",
+			"CTESpriteSpray.ini",
+			"CTEWorldDecal.ini"
+		],
+		"gmod": [
+			"gmod/CTEAntlionDust.ini",
+			"gmod/CTEConcussiveExplosion.ini",
+			"gmod/CTEEffectDispatch.ini",
+			"gmod/CTEHL2MPFireBullets.ini",
+			"gmod/CTEPhysicsProp.ini",
+			"gmod/CTEPlayerAnimEvent.ini"
+		],
+		"l4d2": [
+			"l4d2/CTEBullets.ini",
+			"l4d2/CTEEffectDispatch.ini",
+			"l4d2/CTEFoundryHelpers.ini",
+			"l4d2/CTEPhysicsProp.ini",
+			"l4d2/CTEPlayerAnimEvent.ini",
+			"l4d2/CTutorLesson.ini"
+		],
+		"orangebox/cstrike": [
+			"orangebox/cstrike/CTEFireBullets.ini",
+			"orangebox/cstrike/CTEPlantBomb.ini",
+			"orangebox/cstrike/CTEPlayerAnimEvent.ini",
+			"orangebox/cstrike/CTERadioIcon.ini"
+		],
+		"orangebox": [
+			"orangebox/CTEEffectDispatch.ini",
+			"orangebox/CTEPhysicsProp.ini"
+		],
+		"orangebox/dod": [
+			"orangebox/dod/CTEDODExplosion.ini",
+			"orangebox/dod/CTEFireBullets.ini",
+			"orangebox/dod/CTEPlayerAnimEvent.ini"
+		],
+		"orangebox/hl2mp": [
+			"orangebox/hl2mp/CTEAntlionDust.ini",
+			"orangebox/hl2mp/CTEConcussiveExplosion.ini",
+			"orangebox/hl2mp/CTEHL2MPFireBullets.ini"
+		],
+		"orangebox/tf": [
+			"orangebox/tf/CTEFireBullets.ini",
+			"orangebox/tf/CTEPlayerAnimEvent.ini",
+			"orangebox/tf/CTETFBlood.ini",
+			"orangebox/tf/CTETFExplosion.ini",
+			"orangebox/tf/CTETFParticleEffect.ini"
+		]
+	},
+	"Branches": {
+		"bms": [
+			"bms"
+		],
+		"csgo": [
+			"csgo"
+		],
+		"css": [
+			"orangebox",
+			"orangebox/cstrike"
+		],
+		"dods": [
+			"orangebox",
+			"orangebox/dod"
+		],
+		"gmod": [
+			"gmod"
+		],
+		"hl2dm": [
+			"orangebox",
+			"orangebox/hl2mp"
+		],
+		"l4d2": [
+			"l4d2"
+		],
+		"orangebox": [
+			"orangebox"
+		],
+		"sdk2013": [
+			"orangebox"
+		],
+		"tf2": [
+			"orangebox",
+			"orangebox/tf"
+		]
+	}
+}

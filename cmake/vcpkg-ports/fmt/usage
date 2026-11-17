@@ -1,0 +1,9 @@
+For an existing CMake target named main, use the compiled fmt library:
+
+    find_package(fmt CONFIG REQUIRED)
+    target_link_libraries(main PRIVATE fmt::fmt)
+
+Alternatively, use the header-only target:
+
+    find_package(fmt CONFIG REQUIRED)
+    target_link_libraries(main PRIVATE fmt::fmt-header-only)

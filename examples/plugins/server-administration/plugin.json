@@ -1,0 +1,6 @@
+{
+	"Name": "server-administration",
+	"Entry": "index.js",
+	"Autoload": true,
+	"Description": "SourceJS server moderation, administration, and votes."
+}

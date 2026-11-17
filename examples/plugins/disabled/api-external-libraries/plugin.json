@@ -1,0 +1,8 @@
+{
+	"Name": "api-external-libraries",
+	"Entry": "index.js",
+	"Autoload": false,
+	"Version": "0.1.0",
+	"Author": "SourceJS",
+	"Description": "Callback-based SOCI, Redis, CPR and byte-oriented socket examples."
+}

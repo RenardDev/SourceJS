@@ -1,0 +1,8 @@
+{
+	"Name": "api-core-runtime",
+	"Entry": "index.js",
+	"Autoload": false,
+	"Version": "1.0.0",
+	"Author": "SourceJS",
+	"Description": "Core runtime, paths, filesystem, plugin, extension and public API examples."
+}

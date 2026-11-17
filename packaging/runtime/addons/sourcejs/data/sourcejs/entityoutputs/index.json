@@ -1,0 +1,24 @@
+{
+	"Format": 1,
+	"Entries": {
+		"blade": "blade/CBaseEntityOutput.ini",
+		"bms": "bms/CBaseEntityOutput.ini",
+		"csgo": "csgo/CBaseEntityOutput.ini",
+		"gmod": "gmod/CBaseEntityOutput.ini",
+		"l4d2": "l4d2/CBaseEntityOutput.ini",
+		"orangebox": "orangebox/CBaseEntityOutput.ini"
+	},
+	"Profiles": {
+		"blade": "blade",
+		"bms": "bms",
+		"csgo": "csgo",
+		"css": "orangebox",
+		"dods": "orangebox",
+		"gmod": "gmod",
+		"hl2dm": "orangebox",
+		"l4d2": "l4d2",
+		"orangebox": "orangebox",
+		"sdk2013": "orangebox",
+		"tf2": "orangebox"
+	}
+}

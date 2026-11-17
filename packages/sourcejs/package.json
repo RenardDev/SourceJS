@@ -1,0 +1,7 @@
+{
+  "name": "sourcejs",
+  "version": "0.3.0",
+  "description": "SourceJS runtime facade modules for Source Engine VSP plugins.",
+  "type": "commonjs",
+  "main": "./index.js"
+}

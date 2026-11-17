@@ -1,0 +1,234 @@
+name: Build SourceJS
+
+on:
+  workflow_dispatch:
+    inputs:
+      sdk:
+        description: HL2SDK branch to build.
+        required: true
+        default: l4d2
+        type: choice
+        options:
+          - bgt
+          - blade
+          - bms
+          - contagion
+          - csgo
+          - css
+          - darkm
+          - dods
+          - doi
+          - episode1
+          - eye
+          - gmod
+          - hl2dm
+          - insurgency
+          - l4d
+          - l4d2
+          - mcv
+          - nucleardawn
+          - orangebox
+          - portal2
+          - pvkii
+          - sdk2013
+          - swarm
+          - tf2
+      platform:
+        description: Operating system for the artifact.
+        required: true
+        default: linux
+        type: choice
+        options:
+          - linux
+          - windows
+      arch:
+        description: Architecture supported by the selected SDK and platform.
+        required: true
+        default: x86
+        type: choice
+        options:
+          - x86
+          - x64
+      build_v8:
+        description: Force rebuild the selected V8 configuration instead of using the cache.
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-sourcejs-${{ github.ref }}-${{ inputs.sdk }}-${{ inputs.platform }}-${{ inputs.arch }}
+  cancel-in-progress: true
+
+env:
+  V8_VERSION: "14.4.230"
+  SOURCEJS_V8_CONFIGS: ${{ format('{0}.release', inputs.arch) }}
+
+jobs:
+  select-target:
+    name: Validate SDK target
+    runs-on: ubuntu-latest
+
+    outputs:
+      sdk_ref: ${{ steps.select.outputs.sdk_ref }}
+
+    steps:
+      - name: Checkout SourceJS
+        uses: actions/checkout@v4
+
+      - name: Resolve pinned SDK revision
+        id: select
+        shell: bash
+        env:
+          SOURCEJS_SDK: ${{ inputs.sdk }}
+          SOURCEJS_PLATFORM: ${{ inputs.platform }}
+          SOURCEJS_ARCH: ${{ inputs.arch }}
+        run: |
+          set -euo pipefail
+
+          python3 -B tools/select_github_build_target.py "${SOURCEJS_SDK}" "${SOURCEJS_PLATFORM}" "${SOURCEJS_ARCH}" >> "${GITHUB_OUTPUT}"
+
+  prepare-v8-linux:
+    name: Prepare V8 Linux
+    needs: select-target
+    if: ${{ inputs.platform == 'linux' }}
+    runs-on: ubuntu-latest
+
+    outputs:
+      cache_key: ${{ steps.cache-key.outputs.cache_key }}
+
+    steps:
+      - name: Checkout SourceJS
+        uses: actions/checkout@v4
+
+      - name: Set V8 cache key
+        id: cache-key
+        shell: bash
+        env:
+          FORCE_V8: ${{ inputs.build_v8 }}
+          STABLE_KEY: sourcejs-v8-linux-${{ inputs.arch }}-${{ env.V8_VERSION }}-${{ hashFiles('v8.sh') }}
+        run: |
+          set -euo pipefail
+
+          if [ "${FORCE_V8}" = "true" ]; then
+            # A rerun must not reuse a previous attempt's immutable cache.
+            echo "cache_key=sourcejs-v8-linux-${SOURCEJS_V8_CONFIGS}-${V8_VERSION}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" >> "${GITHUB_OUTPUT}"
+          else
+            echo "cache_key=${STABLE_KEY}" >> "${GITHUB_OUTPUT}"
+          fi
+
+      - name: Restore V8 cache
+        id: v8-cache
+        if: ${{ !inputs.build_v8 }}
+        uses: actions/cache/restore@v4
+        with:
+          path: external/v8
+          key: ${{ steps.cache-key.outputs.cache_key }}
+
+      - name: Build V8
+        if: ${{ inputs.build_v8 || (steps.v8-cache.outputs.cache-hit != 'true') }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          rm -rf external/v8 external/depot_tools
+          mkdir -p external
+          chmod +x ./v8.sh
+          cd external
+          ../v8.sh
+
+      - name: Save V8 cache
+        if: ${{ inputs.build_v8 || (steps.v8-cache.outputs.cache-hit != 'true') }}
+        uses: actions/cache/save@v4
+        with:
+          path: external/v8
+          key: ${{ steps.cache-key.outputs.cache_key }}
+
+  prepare-v8-windows:
+    name: Prepare V8 Windows
+    needs: select-target
+    if: ${{ inputs.platform == 'windows' }}
+    runs-on: windows-2022
+
+    outputs:
+      cache_key: ${{ steps.cache-key.outputs.cache_key }}
+
+    steps:
+      - name: Checkout SourceJS
+        uses: actions/checkout@v4
+
+      - name: Set V8 cache key
+        id: cache-key
+        shell: pwsh
+        env:
+          FORCE_V8: ${{ inputs.build_v8 }}
+          STABLE_KEY: sourcejs-v8-windows-${{ inputs.arch }}-${{ env.V8_VERSION }}-${{ hashFiles('v8.bat') }}
+        run: |
+          if ($env:FORCE_V8 -eq "true") {
+            # A rerun must not reuse a previous attempt's immutable cache.
+            "cache_key=sourcejs-v8-windows-$env:SOURCEJS_V8_CONFIGS-$env:V8_VERSION-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT" >> $env:GITHUB_OUTPUT
+          } else {
+            "cache_key=$env:STABLE_KEY" >> $env:GITHUB_OUTPUT
+          }
+
+      - name: Restore V8 cache
+        id: v8-cache
+        if: ${{ !inputs.build_v8 }}
+        uses: actions/cache/restore@v4
+        with:
+          path: external/v8
+          key: ${{ steps.cache-key.outputs.cache_key }}
+
+      - name: Build V8
+        if: ${{ inputs.build_v8 || (steps.v8-cache.outputs.cache-hit != 'true') }}
+        shell: pwsh
+        run: |
+          $strExternalDirectory = Join-Path $env:GITHUB_WORKSPACE "external"
+
+          foreach ($strDependencyName in @("v8", "depot_tools")) {
+            $strDependencyDirectory = Join-Path $strExternalDirectory $strDependencyName
+            if (Test-Path -LiteralPath $strDependencyDirectory) {
+              Remove-Item -LiteralPath $strDependencyDirectory -Recurse -Force -ErrorAction Stop
+            }
+          }
+
+          New-Item -ItemType Directory -Force -Path $strExternalDirectory -ErrorAction Stop | Out-Null
+          Push-Location -LiteralPath $strExternalDirectory -ErrorAction Stop
+
+          try {
+            cmd /c ..\v8.bat
+
+            if ($LASTEXITCODE -ne 0) {
+              throw "Build V8 failed with exit code $LASTEXITCODE"
+            }
+          } finally {
+            Pop-Location
+          }
+
+      - name: Save V8 cache
+        if: ${{ inputs.build_v8 || (steps.v8-cache.outputs.cache-hit != 'true') }}
+        uses: actions/cache/save@v4
+        with:
+          path: external/v8
+          key: ${{ steps.cache-key.outputs.cache_key }}
+
+  build:
+    name: Build ${{ inputs.sdk }} on ${{ inputs.platform }} ${{ inputs.arch }}
+    needs:
+      - select-target
+      - prepare-v8-linux
+      - prepare-v8-windows
+    if: ${{ !cancelled() && needs.select-target.result == 'success' && (needs.prepare-v8-linux.result == 'success' || needs.prepare-v8-windows.result == 'success') }}
+    uses: ./.github/workflows/build-sdk-branch.yml
+    with:
+      platform: ${{ inputs.platform }}
+      runner: ${{ inputs.platform == 'windows' && 'windows-2022' || 'ubuntu-latest' }}
+      sdk_branch: ${{ inputs.sdk }}
+      sdk_ref: ${{ needs.select-target.outputs.sdk_ref }}
+      safe_name: ${{ inputs.sdk }}
+      arch: ${{ inputs.arch }}
+      visual_studio_arch: ${{ inputs.arch == 'x86' && 'Win32' || 'x64' }}
+      v8_config: ${{ format('{0}.release', inputs.arch) }}
+      v8_cache_key: ${{ needs.prepare-v8-linux.outputs.cache_key || needs.prepare-v8-windows.outputs.cache_key }}

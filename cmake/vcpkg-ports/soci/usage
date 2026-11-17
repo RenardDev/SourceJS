@@ -1,0 +1,8 @@
+For an existing CMake target named main, link the SOCI Core component:
+
+    find_package(SOCI 4.1 COMPONENTS Core CONFIG REQUIRED)
+    target_link_libraries(main PRIVATE SOCI::SOCI)
+
+Add the enabled backend components your application needs to COMPONENTS, such as
+MySQL or SQLite3. CMake component names are case-sensitive; use these spellings
+rather than lowercase vcpkg backend feature names.

@@ -1,0 +1,8 @@
+{
+	"Name": "api-world-objects",
+	"Entry": "index.js",
+	"Autoload": false,
+	"Version": "1.0.0",
+	"Author": "SourceJS",
+	"Description": "Entity, player, hitbox, weapon, engine, mathlib, memory, Steam and netchannel examples."
+}

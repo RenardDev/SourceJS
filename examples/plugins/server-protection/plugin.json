@@ -1,0 +1,6 @@
+{
+	"Name": "server-protection",
+	"Entry": "index.js",
+	"Autoload": true,
+	"Description": "Chat flood protection and configurable reserved player slots."
+}

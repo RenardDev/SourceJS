@@ -1,0 +1,5 @@
+{
+	"Name": "animation-verification",
+	"Entry": "index.js",
+	"Autoload": false
+}

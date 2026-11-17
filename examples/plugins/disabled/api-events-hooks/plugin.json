@@ -1,0 +1,8 @@
+{
+	"Name": "api-events-hooks",
+	"Entry": "index.js",
+	"Autoload": false,
+	"Version": "1.0.0",
+	"Author": "SourceJS",
+	"Description": "Live event, listener, KeyValues, bitbuffer, Detours call, trampoline and memory hook examples."
+}

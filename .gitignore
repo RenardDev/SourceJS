@@ -1,0 +1,66 @@
+# Local dependency checkouts and caches
+/external/
+
+# Build trees and installed release layouts
+/build/
+/package/
+/artifacts/
+/out/
+
+# Downloaded SourceMod GameData and legacy snapshot locations
+/packaging/runtime/addons/sourcejs/gamedata/SourceMod/
+/packaging/runtime/addons/sourcejs/gamedata/SourceMod.Pending/
+/packaging/runtime/addons/sourcejs/gamedata/SourceMod.Previous/
+/packaging/runtime/addons/sourcejs/gamedata/core.games/
+/packaging/runtime/addons/sourcejs/gamedata/sdkhooks.games/
+/packaging/runtime/addons/sourcejs/gamedata/sdktools.games/
+/packaging/runtime/addons/sourcejs/gamedata/sm-cstrike.games/
+/packaging/runtime/addons/sourcejs/gamedata/funcommands.games.txt
+/packaging/runtime/addons/sourcejs/gamedata/sm-tf2.games.txt
+
+# CMake, Ninja and Visual Studio generated files
+/.vs/
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+build.ninja
+.ninja_deps
+.ninja_log
+*.sln
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+
+# Compiler and linker output
+*.a
+*.dll
+*.dylib
+*.exe
+*.exp
+*.ilk
+*.lib
+*.o
+*.obj
+*.pdb
+*.so
+
+# Test and tool caches
+__pycache__/
+*.py[cod]
+.cache/
+.pytest_cache/
+node_modules/
+
+# Local agent
+/.agents/
+/.codex-style-*.tmp.md
+
+# Local logs and temporary files
+*.log
+*.tmp
+*.temp
+*~
+.DS_Store
+Thumbs.db

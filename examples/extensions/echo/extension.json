@@ -1,0 +1,5 @@
+{
+	"Name": "echo",
+	"Autoload": false,
+	"Description": "Example SourceJS native extension manifest."
+}

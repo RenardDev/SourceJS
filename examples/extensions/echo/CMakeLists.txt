@@ -1,0 +1,32 @@
+cmake_minimum_required(VERSION 3.24)
+project(SourceJSEcho LANGUAGES CXX)
+
+set(V8_ROOT "" CACHE PATH "The exact V8 checkout used to build SourceJS.")
+set(V8_CONFIG "x86.release" CACHE STRING "The exact V8 configuration used to build SourceJS.")
+set(SOURCEJS_EXTENSION_HOST_LIBRARY "" CACHE FILEPATH "Optional SourceJS import library (Windows) or sourcejs.so (Linux) for out-of-line V8 APIs.")
+
+include("${CMAKE_CURRENT_SOURCE_DIR}/../../../cmake/SourceJSPackage.cmake")
+
+add_library(echo MODULE Echo.cpp)
+set_target_properties(echo PROPERTIES PREFIX "" CXX_VISIBILITY_PRESET hidden MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+target_compile_features(echo PRIVATE cxx_std_20)
+target_include_directories(echo PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../../../src")
+target_include_directories(echo SYSTEM PRIVATE "${V8_ROOT}/include")
+SourceJSConfigureV8ABI(echo "${V8_ROOT}" "${V8_CONFIG}")
+
+if(SOURCEJS_EXTENSION_HOST_LIBRARY)
+	target_compile_definitions(echo PRIVATE SOURCEJS_ECHO_LINKED_V8 USING_V8_SHARED=1)
+	target_link_libraries(echo PRIVATE "${SOURCEJS_EXTENSION_HOST_LIBRARY}")
+	if(UNIX)
+		set_target_properties(echo PROPERTIES BUILD_WITH_INSTALL_RPATH TRUE INSTALL_RPATH "$ORIGIN/../../../bin;$ORIGIN/../../../../bin")
+	endif()
+endif()
+
+if(MSVC)
+	target_compile_options(echo PRIVATE /Zc:__cplusplus /W4 /WX)
+else()
+	target_compile_options(echo PRIVATE -Wall -Wextra -Wpedantic -Werror)
+	if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+		target_compile_options(echo PRIVATE -fno-gnu-unique)
+	endif()
+endif()

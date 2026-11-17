@@ -1,0 +1,9 @@
+SOURCEJS_1.0 {
+	global:
+		CreateInterface;
+		extern "C++" {
+			v8::*;
+		};
+	local:
+		*;
+};

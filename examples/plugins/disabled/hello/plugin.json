@@ -1,0 +1,6 @@
+{
+	"Name": "hello",
+	"Entry": "index.js",
+	"Autoload": false,
+	"Description": "Minimal SourceJS plugin using real runtime modules."
+}
